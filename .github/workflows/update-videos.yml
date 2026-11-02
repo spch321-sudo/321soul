@@ -1,0 +1,25 @@
+name: update-videos
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 每天 09:17（台北時間）
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch playlist and update data/videos.json
+        run: python3 .github/scripts/update_videos.py
+      - name: Commit if changed
+        run: |
+          if [ -n "$(git status --porcelain data/videos.json)" ]; then
+            git config user.name "321soul-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add data/videos.json
+            git commit -m "Auto: add new playlist videos"
+            git push
+          else
+            echo "no new videos"
+          fi
