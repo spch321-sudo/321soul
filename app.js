@@ -1,5 +1,5 @@
 /* 321心靈快餐 · 主程式（ES5，給 WPS／舊 WebView 也能跑） */
-var APPVER = '2026.1102.162638';
+var APPVER = '2026.1102.163019';
 var SVC = { xz: 'https://xiaozhi-proxy.spch321.workers.dev', tts: 'https://azure-tts.spch321.workers.dev', model: 'claude-sonnet-4-6' };
 var VOICES = { zh: ['zh-TW-YunJheNeural', 'zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural'], en: ['en-US-AndrewNeural', 'en-US-AvaNeural', 'en-US-BrianNeural'], zs: ['zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural', 'zh-TW-YunJheNeural'] };
 var EPOCH = [2026, 10, 2];
@@ -219,7 +219,7 @@ function mtgTick() {
 }
 
 /* ---------- 目錄 ---------- */
-var LST = { q: '', f: 'all', seg: -1, full: false, hits: null };
+var LST = { q: '', f: 'all', seg: -1, full: false, hits: null, col: null };
 function vList() {
   var h = topbar(T('tList'), false, '<button class="ib" data-act="font">Aa</button>') + '<div class="wrap">';
   h += '<div class="search"><input type="search" id="lq" value="' + esc(LST.q) + '" placeholder="' + esc(T('searchPH')) + '"><button class="btn sm" data-act="fulls">' + esc(T('fullSearch')) + '</button></div>';
@@ -241,9 +241,22 @@ function paintList() {
   });
   h += '<div class="xs muted lcount">' + esc(T('nItems', rows.length)) + (q && LST.hits ? '　' + esc(T('fullOn')) : '') + '</div>';
   if (!rows.length) h += '<div class="empty">' + esc(T('noMatch')) + '</div>';
+  var grp = [], cur = null, searching = !!q || LST.f !== 'all' || LST.seg >= 0;
   eachA(rows, function (it) {
-    var n = it[0];
-    h += '<button class="lrow' + (S.read[n] ? ' rd' : '') + '" data-act="go" data-n="' + n + '"><span class="ln">' + n + '</span><span class="lt">' + (it[4] ? '<i class="lth">' + esc(thTag(it[4], it[5])) + '</i>' : '') + '<b>' + esc(it[1]) + '</b><span class="lref">' + esc(it[2]) + '</span>' + (it[3] ? '<span class="lvs">' + esc(it[3]) + '</span>' : '') + '</span><span class="lm">' + (S.star[n] ? '★' : '') + (S.read[n] ? '<i>✓</i>' : '') + '</span></button>';
+    var th = it[4] || '';
+    if (!cur || cur.th !== th) { cur = { th: th, key: it[0], items: [] }; grp.push(cur); }
+    cur.items.push(it);
+  });
+  if (!LST.col) { LST.col = {}; var tn = todayNo(); eachA(grp, function (g) { var has = false; eachA(g.items, function (it) { if (it[0] === tn) has = true; }); if (!has) LST.col[g.key] = 1; }); }
+  eachA(grp, function (g) {
+    var closed = !searching && LST.col[g.key], rc = 0;
+    eachA(g.items, function (it) { if (S.read[it[0]]) rc++; });
+    h += '<button class="lgrp' + (closed ? ' cl' : '') + '" data-act="lgrp" data-v="' + g.key + '"><span class="lg-a">' + (closed ? '▸' : '▾') + '</span><b>' + esc(g.th || '—') + '</b><span class="lg-r">' + g.items[0][0] + '–' + g.items[g.items.length - 1][0] + '</span><span class="lg-c">' + rc + '/' + g.items.length + '</span></button>';
+    if (closed) return;
+    eachA(g.items, function (it) {
+      var n = it[0];
+      h += '<button class="lrow' + (S.read[n] ? ' rd' : '') + '" data-act="go" data-n="' + n + '"><span class="ln">' + n + '</span><span class="lt">' + (it[4] ? '<i class="lth">' + esc(thTag(it[4], it[5])) + '</i>' : '') + '<b>' + esc(it[1]) + '</b><span class="lref">' + esc(it[2]) + '</span>' + (it[3] ? '<span class="lvs">' + esc(it[3]) + '</span>' : '') + '</span><span class="lm">' + (S.star[n] ? '★' : '') + (S.read[n] ? '<i>✓</i>' : '') + '</span></button>';
+    });
   });
   box.innerHTML = h;
 }
@@ -1550,6 +1563,7 @@ document.addEventListener('click', function (e) {
   else if (a === 'lang') switchLang(n.getAttribute('data-lang'));
   else if (a === 'lf') { LST.f = v; vList(); }
   else if (a === 'lfstar') { LST.f = 'st'; LST.seg = -1; open_({ t: 'list' }); }
+  else if (a === 'lgrp') { LST.col = LST.col || {}; LST.col[v] = LST.col[v] ? 0 : 1; paintList(); }
   else if (a === 'lseg') { LST.seg = +v; vList(); }
   else if (a === 'fulls') fullSearch();
   else if (a === 'ttsfrom') { stopAll(); ttsPage(hlRoot(), true, LCUR ? LCUR.title : ''); }
