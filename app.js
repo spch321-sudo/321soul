@@ -1,5 +1,5 @@
 /* 321心靈快餐 · 主程式（ES5，給 WPS／舊 WebView 也能跑） */
-var APPVER = '2026.1102.164546-ws22';
+var APPVER = '2026.1102.164546-ws23';
 var SVC = { xz: 'https://xiaozhi-proxy.spch321.workers.dev', tts: 'https://azure-tts.spch321.workers.dev', model: 'claude-sonnet-4-6' };
 var VOICES = { zh: ['zh-TW-YunJheNeural', 'zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural'], en: ['en-US-AndrewNeural', 'en-US-AvaNeural', 'en-US-BrianNeural'], zs: ['zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural', 'zh-TW-YunJheNeural'] };
 var EPOCH = [2026, 10, 2];
@@ -1533,7 +1533,7 @@ else if (d.t === 're') toast((c._nm || '') + ' ' + String(d.e || '').slice(0, 4)
 function crDrop(c) { var a = []; for (var i = 0; i < CR.conns.length; i++) if (CR.conns[i] !== c) a.push(CR.conns[i]); if (a.length !== CR.conns.length && c._nm) toast(T('crLeft', c._nm)); CR.conns = a; crBar(); }
 function crSend(c, m) { try { if (c && c.open) c.send(m); } catch (e) { } }
 function crCast(m) { if (CR.role !== 'host') return; for (var i = 0; i < CR.conns.length; i++) crSend(CR.conns[i], m); }
-function crPage() { return R.page && R.page.t === 'read' ? { t: 'read', n: R.page.n } : null; }
+function crPage() { var g = R.page; if (!g || g.t === 'studio' || g.t === 'set') return null; return g.n ? { t: g.t, n: g.n } : { t: g.t }; }
 function crState() { return { t: 'st', page: crPage(), name: crMe(), n: CR.conns.length + 1, pos: CR.last.pos || null, mk: CR.last.mk || null }; }
 function crJoin(code, scr) {
 code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -1578,6 +1578,7 @@ if (!blk || s == null) return blk; var ss = qa('.sent', blk); return ss.length ?
 function crScroll(d) {
 if (now() - raManualAt < 5000) return;
 if (d.top0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+if (d.f != null) { var mx = Math.max(0, document.documentElement.scrollHeight - window.innerHeight); window.scrollTo({ top: Math.round(mx * d.f), behavior: 'smooth' }); return; }
 var el = crFind(d.l, d.b); if (!el) return;
 var dy = el.getBoundingClientRect().top - (d.y || 100); if (Math.abs(dy) > 4) window.scrollBy({ top: dy, behavior: 'smooth' });
 }
@@ -1595,7 +1596,7 @@ crBar();
 function crSendPos() {
 if (CR.role !== 'host' || !CR.conns.length) return;
 if (window.scrollY < 12) { CR.last.pos = { t: 'pos', top0: 1 }; crCast(CR.last.pos); return; }
-var bs = qa('#app .blk'); for (var i = 0; i < bs.length; i++) { var r = bs[i].getBoundingClientRect(); if (r.bottom > 110) { CR.last.pos = { t: 'pos', l: bs[i].getAttribute('data-l'), b: bs[i].getAttribute('data-b'), y: Math.round(r.top) }; crCast(CR.last.pos); return; } }
+var bs = qa('#app .blk'); if (!bs.length) { var mx = document.documentElement.scrollHeight - window.innerHeight; CR.last.pos = { t: 'pos', f: mx > 0 ? Math.round(window.scrollY / mx * 1000) / 1000 : 0 }; crCast(CR.last.pos); return; } for (var i = 0; i < bs.length; i++) { var r = bs[i].getBoundingClientRect(); if (r.bottom > 110) { CR.last.pos = { t: 'pos', l: bs[i].getAttribute('data-l'), b: bs[i].getAttribute('data-b'), y: Math.round(r.top) }; crCast(CR.last.pos); return; } }
 }
 window.addEventListener('scroll', function () { if (CR.role !== 'host' || !CR.conns.length) return; clearTimeout(CR.scrollT); CR.scrollT = setTimeout(crSendPos, 220); }, { passive: true });
 function crSentMsg(el, k) { var b = blkOf(el); if (!b || el.getAttribute('data-s') == null) return null; return { t: 'mk', k: k, l: b.getAttribute('data-l'), b: b.getAttribute('data-b'), s: +el.getAttribute('data-s') }; }
