@@ -1,5 +1,5 @@
 /* 321心靈快餐 · 主程式（ES5，給 WPS／舊 WebView 也能跑） */
-var APPVER = '2026.1102.164546-ws2';
+var APPVER = '2026.1102.164546-ws22';
 var SVC = { xz: 'https://xiaozhi-proxy.spch321.workers.dev', tts: 'https://azure-tts.spch321.workers.dev', model: 'claude-sonnet-4-6' };
 var VOICES = { zh: ['zh-TW-YunJheNeural', 'zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural'], en: ['en-US-AndrewNeural', 'en-US-AvaNeural', 'en-US-BrianNeural'], zs: ['zh-CN-Yunfan:DragonHDLatestNeural', 'zh-CN-Xiaochen:DragonHDLatestNeural', 'zh-TW-YunJheNeural'] };
 var EPOCH = [2026, 10, 2];
@@ -1488,7 +1488,7 @@ function initUpdate() {
 var CR = { role: '', code: '', peer: null, conns: [], conn: null, host: '', n: 0, follow: true, last: {}, tries: 0, scrollT: 0, stT: 0, away: false };
 var CR_CH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 var CR_JOIN = (location.search.match(/[?&]join=([A-Za-z0-9]{6})/) || [])[1] || '';
-var CR_SCR = /[?&]screen=1/.test(location.search);
+var CR_SCR = /[?&]screen=1/.test(location.search); window.CR_SCREEN_APP = true;
 if (CR_JOIN) {
   try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { }
   window.addEventListener('load', function () { setTimeout(function () { crJoin(CR_JOIN, CR_SCR); }, 600); });
